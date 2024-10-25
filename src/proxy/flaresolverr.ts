@@ -1,5 +1,7 @@
 import axios from "axios";
 //docker run -d --name flaresolverr -p 8191:8191 ghcr.io/flaresolverr/flaresolverr:latest
+//docker run -d --name flaresolverr -p 8191:8191 -e "FLARESOLVERR_TIMEOUT=120" ghcr.io/flaresolverr/flaresolverr:latest
+
 export async function fetchWithFlareSolverr(url: string) {
   try {
     const res = await axios.post("http://localhost:8191/v1", {

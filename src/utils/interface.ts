@@ -106,3 +106,89 @@ export interface RankInfo {
   volume: number;
   website: string;
 }
+
+export interface TransactionInfo {
+  timestamp: number;
+  tokenAddress: string;
+  type: string;
+  amount: number;
+  profit: number;
+  gasPrice: number;
+}
+
+export interface SmartAddress {
+  wallet_address: string;
+  address: string;
+  realized_profit: number;
+  buy: number;
+  sell: number;
+  last_active: number;
+  realized_profit_1d: number;
+  realized_profit_7d: number;
+  realized_profit_30d: number;
+  pnl_30d: number;
+  pnl_7d: number;
+  pnl_1d: number;
+  txs_30d: number;
+  buy_30d: number;
+  sell_30d: number;
+  balance: number;
+  eth_balance: number;
+  sol_balance: number;
+  trx_balance: number;
+  twitter_username?: string;
+  avatar: string;
+  ens: string;
+  tag: string;
+  tag_rank: TagRank;
+  nickname: string;
+  tags: string[];
+  twitter_name: string[];
+  followers_count: number;
+  is_blue_verified: boolean;
+  twitter_description: string;
+  name: string;
+  avg_hold_time: number;
+  recent_buy_tokens: any[];
+  winrate_7d: number;
+  avg_cost_7d: number;
+  pnl_lt_minus_dot5_num_7d: number;
+  pnl_minus_dot5_0x_num_7d: number;
+  pnl_lt_2x_num_7d: number;
+  pnl_2x_5x_num_7d: number;
+  pnl_gt_5x_num_7d: number;
+  pnl_lt_minus_dot5_num_7d_ratio: number;
+  pnl_minus_dot5_0x_num_7d_ratio: number;
+  pnl_lt_2x_num_7d_ratio: number;
+  pnl_2x_5x_num_7d_ratio: number;
+  pnl_gt_5x_num_7d_ratio: number;
+  daily_profit_7d: DailyProfi[];
+  txs: number;
+  token_num_7d: number;
+}
+
+interface DailyProfi {
+  timestamp: number;
+  profit: number;
+}
+
+interface TagRank {
+  smart_degen: number;
+  pump_smart: number;
+  bluechip_owner: number;
+  kol: number;
+  snipe_bot: number;
+  fresh_wallet: number;
+}
+
+export interface AdderssList {
+  address: string;
+  realized_profit: number;
+  balance: number;
+  winrate_7d: number;
+  tag_rank: string;
+  tags: string[];
+  twitter_name?: string[];
+  twitter_username?: string;
+  name?: string;
+}

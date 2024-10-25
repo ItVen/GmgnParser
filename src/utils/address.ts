@@ -1,10 +1,10 @@
-import { fetchWithFlareSolverr } from "./flaresolverr";
 import {
   ApiResponse,
   HolderInfo,
   RankInfo,
   TopBuyersHolders,
 } from "./interface";
+import { fetchWithFlareSolverr } from "../proxy/flaresolverr";
 import { saveCsvFile } from "./tools";
 
 const showAddress = async (tokenAddress: string) => {
@@ -12,14 +12,14 @@ const showAddress = async (tokenAddress: string) => {
   const res: ApiResponse<{ holders: TopBuyersHolders }> =
     await fetchWithFlareSolverr(proxyUrl);
   try {
-    const data = paseHolders(res.data.holders);
+    const data = parseHolders(res.data.holders);
     return data;
   } catch (error) {
     return null;
   }
 };
 
-const paseHolders = (holders: TopBuyersHolders) => {
+export const parseHolders = (holders: TopBuyersHolders) => {
   const groupInfo = holders.groupInfo;
   let bought_more: HolderInfo[] = [];
   if (groupInfo.bought_more) {
@@ -46,7 +46,7 @@ const hotRank5m = async () => {
   paseRank(res.data.rank);
 };
 const paseRank = async (rank: RankInfo[]) => {
-  let list = [];
+  let list: any[] = [];
   for (let item of rank) {
     if (!item.website || !item.website) {
       continue;

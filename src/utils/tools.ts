@@ -55,3 +55,19 @@ export async function saveCsvFile(filePath: string, records: object[]) {
   await csvWriter.writeRecords(records);
   console.log(`CSV file written successfully to ${filePath}`);
 }
+
+export function delay(time: number) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+
+export function convertTags(tags: string[]): string[] {
+  const tagDescriptions: { [key: string]: string } = {
+    smart_degen: "聪明钱",
+    pump_smart: "pump 聪明钱",
+    fresh_wallet: "新钱包",
+    snipe_bot: "狙击者",
+  };
+
+  return tags.map((tag) => tagDescriptions[tag] || tag);
+}
