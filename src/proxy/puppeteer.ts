@@ -5,10 +5,12 @@ import { delay } from "../utils/tools";
 
 puppeteer.use(StealthPlugin());
 
-export async function createBrowser(headless: boolean): Promise<Browser> {
+export async function createBrowser(
+  headless: boolean,
+  userDataDir: string
+): Promise<Browser> {
   return await puppeteer.launch({
     headless,
-    userDataDir: `./tmp/session`,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",

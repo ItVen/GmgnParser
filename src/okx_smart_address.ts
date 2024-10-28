@@ -149,7 +149,7 @@ class OkxSmartAddressAnalyzer {
 export async function okxMain(browser?: Browser) {
   let close = false;
   if (!browser) {
-    browser = await createBrowser(true);
+    browser = await createBrowser(true, "./tmp/okx/session");
     close = true;
   }
   const time = formattedDate();
@@ -207,6 +207,7 @@ const compareCsv = async (smartMoney: SmartMoney[], chianInfo: string) => {
       (item) => !oldAddresses.has(item.address)
     );
     const list = [...history, ...uniqueNewItems];
+    console.log("uniqueNewItems", uniqueNewItems.length);
     await saveCsvFile(path, list);
   } catch (error) {
     await saveCsvFile(path, smartMoney);

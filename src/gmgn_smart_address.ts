@@ -89,7 +89,7 @@ class SmartAddressAnalyzer {
 export async function gmgnMain(browser?: Browser) {
   let close = false;
   if (!browser) {
-    browser = await createBrowser(false);
+    browser = await createBrowser(false, "./tmp/gmgn/session");
     close = true;
   }
   let smartAddressAnalyzer = new SmartAddressAnalyzer();
@@ -130,19 +130,16 @@ export async function gmgnMain(browser?: Browser) {
 
 const compareCsv = async (smartMoney: AdderssList[], chianInfo: string) => {
   const path = `./csv/GMGN_${chianInfo}_Address.csv`;
-  await saveCsvFile(path, smartMoney);
   try {
     const history = await readCsvFile(path);
-    console.log("history", history);
     const oldAddresses = new Set<string>(history.map((item) => item.address));
     const uniqueNewItems = smartMoney.filter(
       (item) => !oldAddresses.has(item.address)
     );
+    console.log("uniqueNewItems", uniqueNewItems.length);
     const list = [...history, ...uniqueNewItems];
     await saveCsvFile(path, list);
   } catch (error) {
-    console.log("error", error);
-    console.log("path", path);
     await saveCsvFile(path, smartMoney);
   }
 }; 

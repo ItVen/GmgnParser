@@ -3,9 +3,25 @@ import { okxMain } from "./okx_smart_address";
 import { createBrowser } from "./proxy/puppeteer";
 import { formattedDate } from "./utils/tools";
 
-const oneHourInMilliseconds = 60 * 60 * 1000;
-setInterval(async () => {
-  const browser = await createBrowser(false);
+// const oneHourInMilliseconds = 60 * 60 * 1000;
+// setInterval(async () => {
+//   const browser = await createBrowser(false);
+//   const time = formattedDate();
+//   console.log(`start run ${time}`);
+//   try {
+//     console.log(`start gmgnMain`);
+//     await gmgnMain(browser);
+//     console.log(`start okxMain`);
+//     await okxMain(browser);
+//   } catch (error) {
+//     console.log(`start run ${error}`);
+//   } finally {
+//     await browser.close();
+//   }
+// }, oneHourInMilliseconds);
+
+const test = async () => {
+  const browser = await createBrowser(false, `./tmp/all/session`);
   const time = formattedDate();
   console.log(`start run ${time}`);
   try {
@@ -18,7 +34,6 @@ setInterval(async () => {
   } finally {
     await browser.close();
   }
-}, oneHourInMilliseconds);
+};
 
-// gmgnMain().catch(console.error);
-// okxMain().catch(console.error);
+test().catch(console.error);
