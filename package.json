@@ -13,7 +13,9 @@
   },
   "scripts": {
     "address": "ts-node src/address.ts",
-    "smart-address": "ts-node src/gmgn_smart_address"
+    "gmgn": "ts-node src/gmgn_smart_address",
+    "okx": "ts-node src/okx_smart_address",
+    "start": "ts-node src/index"
   },
   "dependencies": {
     "@duneanalytics/client-sdk": "^0.2.4",

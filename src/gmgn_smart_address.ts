@@ -1,11 +1,16 @@
-import { scrapePage } from "./proxy/puppeteer";
+import { Browser } from "puppeteer";
+import { createBrowser, scrapePage } from "./proxy/puppeteer";
 import { AdderssList, ApiResponse, SmartAddress } from "./utils/interface";
 
-import { convertTags, saveCsvFile } from "./utils/tools";
+import { convertTags, formattedDate, saveCsvFile } from "./utils/tools";
 
 class SmartAddressAnalyzer {
-  async analyzeAddresses(chain: string, tag?: string): Promise<AdderssList[]> {
-    const list = await this.getPumpSmartDtat(chain, tag);
+  async analyzeAddresses(
+    chain: string,
+    browser: Browser,
+    tag?: string
+  ): Promise<AdderssList[]> {
+    const list = await this.getPumpSmartDtat(chain, browser, tag);
     if (!list) {
       console.log("list error data is null");
       return [];
@@ -14,7 +19,11 @@ class SmartAddressAnalyzer {
     return list;
   }
 
-  private async getPumpSmartDtat(chain: string, tag?: string) {
+  private async getPumpSmartDtat(
+    chain: string,
+    browser: Browser,
+    tag?: string
+  ) {
     let proxyUrl = `https://gmgn.ai/defi/quotation/v1/rank/${chain}/wallets/7d?tag=${tag}&orderby=winrate_7d&direction=desc`;
     if (!tag) {
       proxyUrl = `https://gmgn.ai/defi/quotation/v1/rank/${chain}/wallets/7d?orderby=winrate_7d&direction=desc`;
@@ -22,7 +31,8 @@ class SmartAddressAnalyzer {
 
     try {
       const res: ApiResponse<{ rank: SmartAddress[] }> = await scrapePage(
-        proxyUrl
+        proxyUrl,
+        browser
       );
       console.log(res.data.rank.length);
       return this.paseRank(res.data.rank);
@@ -65,7 +75,7 @@ class SmartAddressAnalyzer {
     return uniqueList;
   };
 }
-async function main() {
+export async function gmgnMain(browser: Browser) {
   let smartAddressAnalyzer = new SmartAddressAnalyzer();
   const tags = [
     undefined,
@@ -82,6 +92,7 @@ async function main() {
       tags.map(async (tag) => {
         const addressList = await smartAddressAnalyzer.analyzeAddresses(
           chain,
+          browser,
           tag
         );
         list = list.concat(addressList);
@@ -89,17 +100,8 @@ async function main() {
     );
     list = smartAddressAnalyzer.removeDuplicates(list);
     if (list.length > 0) {
-      const now = new Date();
-      const formattedDate = `${String(now.getMonth() + 1).padStart(
-        2,
-        "0"
-      )}-${String(now.getDate()).padStart(2, "0")} ${String(
-        now.getHours()
-      ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-      await saveCsvFile(`./GMGN_${chain}_Address_${formattedDate}.csv`, list);
+      const time = formattedDate();
+      await saveCsvFile(`./GMGN_${chain}_Address_${time}.csv`, list);
     }
   });
 }
-
-main().catch(console.error);

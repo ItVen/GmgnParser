@@ -1,35 +1,64 @@
-import { Page } from "puppeteer";
+import { Browser, Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { delay } from "../utils/tools";
 
 puppeteer.use(StealthPlugin());
 
-export async function scrapePage(url: string) {
-  const browser = await puppeteer.launch({
-    headless: false,
+export async function createBrowser(headless: boolean): Promise<Browser> {
+  return await puppeteer.launch({
+    headless,
+    userDataDir: `./tmp/session`,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--single-process",
+      "--no-zygote",
+    ],
   });
-  const page = await browser.newPage();
+}
 
-  await page.goto(url);
-  await delay(5000); // Cloudflare verify time
+export async function scrapePage(
+  url: string,
+  browser: Browser,
+  delay_time = 5000,
+  maxRetries = 3,
+  retryDelay = 2000
+) {
+  let retryCount = 0;
+  while (retryCount <= maxRetries) {
+    const page = await browser.newPage();
+    try {
+      await page.goto(url);
+      await delay(delay_time); // Cloudflare verify time
 
-  const jsonData = await getJsonData(page);
-  if (jsonData) {
-    await browser.close();
+      await page.waitForSelector(".json-formatter-container", {
+        timeout: 10000,
+      });
+      const jsonData = await getJsonData(page);
+
+      return jsonData; // 成功获取数据后直接返回
+    } catch (error) {
+      console.log(
+        `Retry ${
+          retryCount + 1
+        }/${maxRetries}: .json-formatter-container not found`
+      );
+
+      retryCount += 1;
+      if (retryCount > maxRetries) {
+        console.error("Max retries reached. Aborting...");
+        return null; // 超过最大重试次数后返回 null
+      }
+
+      await delay(retryDelay); // 在重试前稍作等待
+    } finally {
+      await page.close(); // 确保页面在每次循环后关闭
+    }
   }
-
-  return jsonData;
 }
 
 async function getJsonData(page: Page): Promise<any> {
-  try {
-    await page.waitForSelector(".json-formatter-container");
-  } catch (error) {
-    await delay(5000);
-    console.log(".json-formatter-container not find Waiting 5s");
-    return getJsonData(page);
-  }
   const jsonData = await page.evaluate(() => {
     const preElement = document.querySelector("pre");
     if (preElement) {
