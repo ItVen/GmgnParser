@@ -13,6 +13,7 @@ interface CsvRow {
 function ensureDirectoryExistence(filePath: string) {
   const dirname = path.dirname(filePath);
   if (!fs.existsSync(dirname)) {
+    console.log("not exists ", dirname);
     fs.mkdirSync(dirname, { recursive: true });
   }
 }
@@ -60,7 +61,6 @@ export function delay(time: number) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-
 export function convertTags(tags: string[]): string[] {
   const tagDescriptions: { [key: string]: string } = {
     smart_degen: "聪明钱",
@@ -87,3 +87,4 @@ export const formattedDate = (): string => {
   ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   return formattedDate;
 };
+

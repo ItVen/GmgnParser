@@ -191,4 +191,5 @@ export interface AdderssList {
   twitter_name?: string[];
   twitter_username?: string;
   name?: string;
+  time: string;
 }

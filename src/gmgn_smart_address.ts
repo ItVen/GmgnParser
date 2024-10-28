@@ -2,15 +2,21 @@ import { Browser } from "puppeteer";
 import { createBrowser, scrapePage } from "./proxy/puppeteer";
 import { AdderssList, ApiResponse, SmartAddress } from "./utils/interface";
 
-import { convertTags, formattedDate, saveCsvFile } from "./utils/tools";
+import {
+  convertTags,
+  formattedDate,
+  readCsvFile,
+  saveCsvFile,
+} from "./utils/tools";
 
 class SmartAddressAnalyzer {
   async analyzeAddresses(
     chain: string,
     browser: Browser,
+    time: string,
     tag?: string
   ): Promise<AdderssList[]> {
-    const list = await this.getPumpSmartDtat(chain, browser, tag);
+    const list = await this.getPumpSmartDtat(chain, browser, time, tag);
     if (!list) {
       console.log("list error data is null");
       return [];
@@ -22,6 +28,7 @@ class SmartAddressAnalyzer {
   private async getPumpSmartDtat(
     chain: string,
     browser: Browser,
+    time: string,
     tag?: string
   ) {
     let proxyUrl = `https://gmgn.ai/defi/quotation/v1/rank/${chain}/wallets/7d?tag=${tag}&orderby=winrate_7d&direction=desc`;
@@ -35,14 +42,17 @@ class SmartAddressAnalyzer {
         browser
       );
       console.log(res.data.rank.length);
-      return this.paseRank(res.data.rank);
+      return this.paseRank(res.data.rank, time);
     } catch (error) {
       console.error(`error ${error}`);
       return null;
     }
   }
 
-  paseRank = async (rank: SmartAddress[]): Promise<AdderssList[]> => {
+  paseRank = async (
+    rank: SmartAddress[],
+    time: string
+  ): Promise<AdderssList[]> => {
     let list: any[] = [];
     for (let item of rank) {
       const data: AdderssList = {
@@ -55,6 +65,7 @@ class SmartAddressAnalyzer {
         twitter_name: item.twitter_name,
         twitter_username: item.twitter_username,
         name: item.name,
+        time,
       };
       list.push(data);
     }
@@ -75,7 +86,12 @@ class SmartAddressAnalyzer {
     return uniqueList;
   };
 }
-export async function gmgnMain(browser: Browser) {
+export async function gmgnMain(browser?: Browser) {
+  let close = false;
+  if (!browser) {
+    browser = await createBrowser(false);
+    close = true;
+  }
   let smartAddressAnalyzer = new SmartAddressAnalyzer();
   const tags = [
     undefined,
@@ -86,22 +102,51 @@ export async function gmgnMain(browser: Browser) {
     "renowned",
   ];
   const chainList = ["sol", "eth"];
-  chainList.map(async (chain) => {
-    let list: AdderssList[] = [];
-    await Promise.all(
-      tags.map(async (tag) => {
-        const addressList = await smartAddressAnalyzer.analyzeAddresses(
-          chain,
-          browser,
-          tag
-        );
-        list = list.concat(addressList);
-      })
-    );
-    list = smartAddressAnalyzer.removeDuplicates(list);
-    if (list.length > 0) {
-      const time = formattedDate();
-      await saveCsvFile(`./GMGN_${chain}_Address_${time}.csv`, list);
-    }
-  });
+  const time = formattedDate();
+  await Promise.all(
+    chainList.map(async (chain) => {
+      let list: AdderssList[] = [];
+      await Promise.all(
+        tags.map(async (tag) => {
+          const addressList = await smartAddressAnalyzer.analyzeAddresses(
+            chain,
+            browser,
+            time,
+            tag
+          );
+          list = list.concat(addressList);
+        })
+      );
+      list = smartAddressAnalyzer.removeDuplicates(list);
+      if (list.length > 0) {
+        await compareCsv(list, chain);
+      }
+    })
+  );
+  if (close) {
+    await browser.close();
+  }
 }
+
+const compareCsv = async (smartMoney: AdderssList[], chianInfo: string) => {
+  const path = `./csv/GMGN_${chianInfo}_Address.csv`;
+  await saveCsvFile(path, smartMoney);
+  try {
+    const history = await readCsvFile(path);
+    console.log("history", history);
+    const oldAddresses = new Set<string>(history.map((item) => item.address));
+    const uniqueNewItems = smartMoney.filter(
+      (item) => !oldAddresses.has(item.address)
+    );
+    const list = [...history, ...uniqueNewItems];
+    await saveCsvFile(path, list);
+  } catch (error) {
+    console.log("error", error);
+    console.log("path", path);
+    await saveCsvFile(path, smartMoney);
+  }
+}; 
+
+
+
+  

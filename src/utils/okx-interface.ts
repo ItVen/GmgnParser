@@ -48,10 +48,9 @@ export interface SmartMoneyList {
 }
 
 export interface SmartMoney {
-  holdingTokenAmount: string;
-  holdingTokenCurrencyAmount: string;
-  tokenWinRate: string;
-  userWalletAddress: string;
+  userWalletAddress?: string;
+  address: string;
   winRate: string;
-  yieldRate: string;
+  tags: string[];
+  time: string;
 }

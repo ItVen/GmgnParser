@@ -9,8 +9,10 @@ setInterval(async () => {
   const time = formattedDate();
   console.log(`start run ${time}`);
   try {
+    console.log(`start gmgnMain`);
     await gmgnMain(browser);
-    await okxMain(browser);
+    console.log(`start okxMain`);
+    await okxMain();
   } catch (error) {
     console.log(`start run ${error}`);
   } finally {

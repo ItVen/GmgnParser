@@ -8,7 +8,12 @@ import {
   SmartMoneyList,
   TokenData,
 } from "./utils/okx-interface";
-import { chainIdMap, saveCsvFile, formattedDate } from "./utils/tools";
+import {
+  chainIdMap,
+  saveCsvFile,
+  formattedDate,
+  readCsvFile,
+} from "./utils/tools";
 
 const MAX_CONCURRENT_REQUESTS = 5; // 控制并发数
 
@@ -98,7 +103,7 @@ class OkxSmartAddressAnalyzer {
     browser: Browser,
     chainId: number,
     tokenAddress: string,
-    tokenSymbol: string
+    time: string
   ): Promise<void> {
     const url = new URL(
       "https://www.okx.com/priapi/v1/invest/activity/smart-money/token/holding/list"
@@ -111,10 +116,17 @@ class OkxSmartAddressAnalyzer {
       browser,
       url,
       (res) => {
-        const updatedResults = res.data.result.map((result) => ({
-          ...result,
-          holdingTokenAmount: `${result.holdingTokenAmount} ${tokenSymbol}`,
-        }));
+        const updatedResults = res.data.result.map((result) => {
+          if (!result.userWalletAddress) {
+            console.log(result);
+          }
+          return {
+            address: result.userWalletAddress as string,
+            winRate: result.winRate,
+            tags: ["聪明钱"],
+            time,
+          };
+        });
         const existingList = this.okxTokenSmartMoneyMap.get(chainId) || [];
         this.okxTokenSmartMoneyMap.set(
           chainId,
@@ -125,27 +137,32 @@ class OkxSmartAddressAnalyzer {
     );
   }
 
-  removeDuplicates(list: AdderssList[]): AdderssList[] {
+  removeDuplicates(list: SmartMoney[]): SmartMoney[] {
     const seen = new Set<string>();
-    return list
-      .filter((item) => !seen.has(item.address) && seen.add(item.address))
-      .sort((a, b) => b.winrate_7d - a.winrate_7d);
+    list.sort((a, b) => parseFloat(b.winRate) - parseFloat(a.winRate));
+    return list.filter(
+      (item) => !seen.has(item.address) && seen.add(item.address)
+    );
   }
 }
 
-export async function okxMain(browser: Browser) {
+export async function okxMain(browser?: Browser) {
+  let close = false;
+  if (!browser) {
+    browser = await createBrowser(true);
+    close = true;
+  }
   const time = formattedDate();
   const smartAddressAnalyzer = new OkxSmartAddressAnalyzer();
   const chainIds = [501, 1];
   const txnSource = [[1, 2], [1]];
-
   await Promise.all(
     chainIds.map((chainId, index) =>
       smartAddressAnalyzer.queryTokens(browser, chainId, txnSource[index])
     )
   );
 
-  const batchSize = 50;
+  const batchSize = 100;
   for (const chainId of chainIds) {
     const list = smartAddressAnalyzer.okxTokenMap.get(chainId);
     if (!list) continue;
@@ -159,19 +176,40 @@ export async function okxMain(browser: Browser) {
             browser,
             chainId,
             token.tokenAddress,
-            token.tokenSymbol
+            time
           )
         )
       );
     }
 
-    const smartMoney = smartAddressAnalyzer.okxTokenSmartMoneyMap.get(chainId);
+    let smartMoney = smartAddressAnalyzer.okxTokenSmartMoneyMap.get(chainId);
     console.log(`smartMoney list.length: ${smartMoney?.length} `);
+
     if (smartMoney) {
-      await saveCsvFile(
-        `./OKX_${chainIdMap[chainId]}_Address_${time}.csv`,
-        smartMoney
+      smartMoney = smartAddressAnalyzer.removeDuplicates(smartMoney);
+      console.log(
+        `smartMoney removeDuplicates list.length: ${smartMoney?.length} `
       );
+      await compareCsv(smartMoney, chainIdMap[chainId]);
     }
   }
+  if (close) {
+    await browser.close();
+  }
 }
+
+const compareCsv = async (smartMoney: SmartMoney[], chianInfo: string) => {
+  const path = `./csv/OKX_${chianInfo}_Address.csv`;
+  try {
+    const history = await readCsvFile(path);
+    const oldAddresses = new Set<string>(history.map((item) => item.address));
+    const uniqueNewItems = smartMoney.filter(
+      (item) => !oldAddresses.has(item.address)
+    );
+    const list = [...history, ...uniqueNewItems];
+    await saveCsvFile(path, list);
+  } catch (error) {
+    await saveCsvFile(path, smartMoney);
+  }
+}; 
+
