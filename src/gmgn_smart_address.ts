@@ -137,8 +137,10 @@ const compareCsv = async (smartMoney: AdderssList[], chianInfo: string) => {
       (item) => !oldAddresses.has(item.address)
     );
     console.log("uniqueNewItems", uniqueNewItems.length);
-    const list = [...history, ...uniqueNewItems];
-    await saveCsvFile(path, list);
+    if (uniqueNewItems.length > 0) {
+      await saveCsvFile(path, uniqueNewItems, true);
+    }
+    
   } catch (error) {
     await saveCsvFile(path, smartMoney);
   }

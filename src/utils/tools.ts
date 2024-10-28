@@ -44,7 +44,11 @@ export function generateCsvHeader(
   }));
 }
 
-export async function saveCsvFile(filePath: string, records: object[]) {
+export async function saveCsvFile(
+  filePath: string,
+  records: object[],
+  append = false
+) {
   ensureDirectoryExistence(filePath);
 
   const header = generateCsvHeader(records);
@@ -52,6 +56,7 @@ export async function saveCsvFile(filePath: string, records: object[]) {
   const csvWriter = createObjectCsvWriter({
     path: filePath,
     header: header,
+    append,
   });
   await csvWriter.writeRecords(records);
   console.log(`CSV file written successfully to ${filePath}`);

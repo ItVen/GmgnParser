@@ -11,12 +11,14 @@ export async function createBrowser(
 ): Promise<Browser> {
   return await puppeteer.launch({
     headless,
+    userDataDir,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--single-process",
       "--no-zygote",
     ],
+    timeout: 60000,
   });
 }
 

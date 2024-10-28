@@ -162,7 +162,7 @@ export async function okxMain(browser?: Browser) {
     )
   );
 
-  const batchSize = 100;
+  const batchSize = 50;
   for (const chainId of chainIds) {
     const list = smartAddressAnalyzer.okxTokenMap.get(chainId);
     if (!list) continue;
@@ -206,9 +206,10 @@ const compareCsv = async (smartMoney: SmartMoney[], chianInfo: string) => {
     const uniqueNewItems = smartMoney.filter(
       (item) => !oldAddresses.has(item.address)
     );
-    const list = [...history, ...uniqueNewItems];
     console.log("uniqueNewItems", uniqueNewItems.length);
-    await saveCsvFile(path, list);
+    if (uniqueNewItems.length > 0) {
+      await saveCsvFile(path, uniqueNewItems, true);
+    }
   } catch (error) {
     await saveCsvFile(path, smartMoney);
   }
